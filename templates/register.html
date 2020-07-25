@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Register
+{% endblock %}
+
+{% block main %}
+    <div id="alertBox"></div>
+    <form action="/register" method="post" class="needs-validation" novalidate>
+        <div class="form-group">
+            <input autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text" required>
+            <div class="invalid-feedback">
+                Please choose a username.
+            </div>
+        </div>
+        <div class="form-group">
+            <input class="form-control" name="password" placeholder="Password" type="password" required>
+            <div class="invalid-feedback">
+                Please choose a password.
+            </div>
+        </div>
+        <div class="form-group">
+            <input class="form-control" name="confirmation" placeholder="Confirm Password" type="password" required>
+            <div class="invalid-feedback">
+                Please confirm your password.
+            </div>
+        </div>
+        <button id="submitFormButton" class="btn btn-primary" type="submit">Register</button>
+    </form>
+    <script>
+        // Runs after DOM is fully loaded
+        $(document).ready(function(){
+            // Fetches all the form data
+            var forms = document.getElementsByClassName('needs-validation');
+            
+            // Validation
+            var validation = Array.prototype.filter.call(forms, function(form) {
+                $("#submitFormButton").click(function(e){
+                                    
+                    // To prevent submission
+                    e.preventDefault();
+                    e.stopPropagation();
+                
+                    // Validation
+                    var message;
+                    var username = $("input[name=username]").val();
+                    var password = $("input[name=password]").val();
+                    if (form.checkValidity() === true){
+                        $.get("/check?username=" + username,
+                            function(data) {
+                                if (data === false)
+                                {
+                                    message = "This username is taken, try something else!";
+                                    $.get("/alert?message=" + message,function(response) {
+                                        $("#alertBox").html(response);
+                                    });
+                                }
+                                else
+                                {
+                                    if (password != $("input[name=confirmation]").val())
+                                    {
+                                        message = "The two passwords are different!";
+                                        $.get("/alert?message=" + message,function(response) {
+                                            $("#alertBox").html(response);
+                                        });
+                                    }
+                                    else if (password.length < 8)
+                                    {
+                                        message = "The password must contain atleast 8 characters";
+                                        $.get("/alert?message=" + message,function(response) {
+                                            $("#alertBox").html(response);
+                                        });
+                                    }
+                                    else if (!((/[a-z]/g).test(password) && (/[A-Z]/g).test(password) && (/[0-9]/g).test(password) && (/[\W]/g).test(password)))
+                                    {
+                                        message = "The password must contain atleast one out of each a-z, A-Z, 0-9 and special characters!";
+                                        $.get("/alert?message=" + message,function(response) {
+                                            $("#alertBox").html(response);
+                                        });
+                                    }
+                                    else    
+                                        $("form").submit();
+                                }
+                        });
+                    }
+                    form.classList.add('was-validated');
+                });
+            });
+        });
+    </script>
+{% endblock %}
