@@ -1,44 +1,44 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Portfolio
+Portfolio
 {% endblock %}
 
 {% block main %}
-        <table class="table">
-        <thead class="thead-dark">
-            <tr>
-              <th scope="col">Symbol</th>
-              <th scope="col">Company</th>
-              <th scope="col">Shares</th>
-              <th scope="col">Price</th>
-              <th scope="col">Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in table %}
-                <tr>
-                    <th scope="row">{{ row["symbol"] }}</th>
-                    <td>{{ row["name"] }}</td>
-                    <td>{{ row["shares"] }}</td>
-                    <td>{{ row["price"] | usd }}</td>
-                    <td>{{ row["total"] | usd }}</td>
-                </tr>
-            {% endfor %}
-            <tr>
-                    <th scope="row">CASH</th>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td>{{ cash | usd }}</td>
-            </tr>
-            <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>   
-                    <th scope="row">{{ grandTotal | usd }}</th>
-            </tr>
-        </tbody>
-    </table>
+<table class="table">
+    <thead class="thead-dark">
+        <tr>
+            <th scope="col">Symbol</th>
+            <th scope="col">Company</th>
+            <th scope="col">Shares</th>
+            <th scope="col">Price</th>
+            <th scope="col">Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in table %}
+        <tr>
+            <th scope="row">{{ row["symbol"] }}</th>
+            <td>{{ row["name"] }}</td>
+            <td>{{ row["shares"] }}</td>
+            <td>{{ row["price"] | usd }}</td>
+            <td>{{ row["total"] | usd }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <th scope="row">CASH</th>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>{{ cash | usd }}</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <th scope="row">{{ grand_total | usd }}</th>
+        </tr>
+    </tbody>
+</table>
 {% endblock %}

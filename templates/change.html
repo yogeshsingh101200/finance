@@ -1,64 +1,62 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Change Password
+Change Password
 {% endblock %}
 
 {% block main %}
-    <div id="alertBox"></div>
+<div id="alertBox"></div>
+</div>
+<form action="/change" method="post" class="needs-validation" novalidate>
+    <div class="form-group">
+        <input autofocus class="form-control" name="old_pswrd" placeholder="Old Password" type="password" required>
+        <div class="invalid-feedback">
+            This field can't be empty.
+        </div>
     </div>
-    <form action="/change" method="post" class="needs-validation" novalidate>
-        <div class="form-group">
-            <input autofocus class="form-control" name="oldPassword" placeholder="Old Password" type="password" required>
-            <div class="invalid-feedback">
-                This field can't be empty.
-            </div>
+    <div class="form-group">
+        <input class="form-control" name="new_pswrd" placeholder="New Password" type="password" required>
+        <div class="invalid-feedback">
+            This field can't be empty.
         </div>
-        <div class="form-group">
-            <input class="form-control" name="newPassword" placeholder="New Password" type="password" required>
-            <div class="invalid-feedback">
-                This field can't be empty.
-            </div>
-        </div>
-        <button id="submitForm" class="btn btn-primary" type="submit">Change</button>
-    </form>
-    <script>
-        // Runs after DOM is fully loaded
-        $(document).ready(function() {
-            // Fetches all the form data
-            var forms = document.getElementsByClassName('needs-validation');
-            
-            // Validation
-            var validation = Array.prototype.filter.call(forms, function(form) {
-                $("#submitForm").click(function(e) {
-                    // To prevent submission
-                    e.preventDefault();
-                    e.stopPropagation();
-                
-                    // Validation
-                    var message;
-                    var newPassword = $("input[name=newPassword]").val();
-                    if (form.checkValidity() === true){
-                        if (newPassword.length < 8)
-                        {
-                            message = "The password must contain atleast 8 characters";
-                            $.get("/alert?message=" + message,function(response) {
-                                $("#alertBox").html(response);
-                            });
-                        }
-                        else if (!((/[a-z]/g).test(newPassword) && (/[A-Z]/g).test(newPassword) && (/[0-9]/g).test(newPassword) && (/[\W]/g).test(newPassword)))
-                        {
-                            message = "The password must contain atleast one out of each a-z, A-Z, 0-9 and special characters!";
-                            $.get("/alert?message=" + message,function(response) {
-                                $("#alertBox").html(response);
-                            });
-                        }
-                        else    
-                            $("form").submit();
+    </div>
+    <button id="submitForm" class="btn btn-primary" type="submit">Change</button>
+</form>
+<script>
+    // Runs after DOM is fully loaded
+    $(document).ready(function () {
+        // Fetches all the form data
+        var forms = document.getElementsByClassName('needs-validation');
+
+        // Validation
+        var validation = Array.prototype.filter.call(forms, function (form) {
+            $("#submitForm").click(function (e) {
+                // To prevent submission
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Validation
+                var message;
+                var newPassword = $("input[name=newPassword]").val();
+                if (form.checkValidity() === true) {
+                    if (newPassword.length < 8) {
+                        message = "The password must contain atleast 8 characters";
+                        $.get("/alert?message=" + message, function (response) {
+                            $("#alertBox").html(response);
+                        });
                     }
-                    form.classList.add('was-validated');
-                });
+                    else if (!((/[a-z]/g).test(newPassword) && (/[A-Z]/g).test(newPassword) && (/[0-9]/g).test(newPassword) && (/[\W]/g).test(newPassword))) {
+                        message = "The password must contain atleast one out of each a-z, A-Z, 0-9 and special characters!";
+                        $.get("/alert?message=" + message, function (response) {
+                            $("#alertBox").html(response);
+                        });
+                    }
+                    else
+                        $("form").submit();
+                }
+                form.classList.add('was-validated');
             });
         });
-    </script>
+    });
+</script>
 {% endblock %}

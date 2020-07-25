@@ -3,11 +3,11 @@ import os
 
 import re
 
+from tempfile import mkdtemp
 from flask import Flask, flash, jsonify, redirect, render_template, request, session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from flask_session import Session
-from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -19,11 +19,10 @@ app = Flask(__name__)
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
-# Ensure responses aren't cached
-
 
 @app.after_request
 def after_request(response):
+    """ Ensure responses aren't cached """
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Expires"] = 0
     response.headers["Pragma"] = "no-cache"
@@ -67,7 +66,7 @@ def index():
         })
 
     # To store total valuation of shares
-    totPrice = 0
+    total_price = 0
 
     # Populating the table with data
     for row in rows:
@@ -82,7 +81,7 @@ def index():
                 "price": quote["price"],
                 "total": row["SUM(shares)"] * quote["price"]
             })
-            totPrice += row["SUM(shares)"] * quote["price"]
+            total_price += row["SUM(shares)"] * quote["price"]
 
     # For showing available cash
     cash = db.execute("SELECT cash FROM users WHERE id = :id", {
@@ -90,9 +89,9 @@ def index():
     }).fetchone()
 
     # For showing grand total
-    grandTotal = totPrice + cash["cash"]
+    grand_total = total_price + cash["cash"]
 
-    return render_template("index.html", table=table, cash=cash["cash"], grandTotal=grandTotal)
+    return render_template("index.html", table=table, cash=cash["cash"], grand_total=grand_total)
 
 
 @app.route("/buy", methods=["GET", "POST"])
@@ -151,8 +150,7 @@ def buy():
         return redirect("/")
 
     # If user reaches to route via get as by clicking on the tab
-    else:
-        return render_template("buy.html")
+    return render_template("buy.html")
 
 
 @app.route("/check", methods=["GET", "POST"])
@@ -166,8 +164,8 @@ def check():
 
     if row:
         return jsonify(False)
-    else:
-        return jsonify(True)
+
+    return jsonify(True)
 
 
 @app.route("/history")
@@ -269,26 +267,37 @@ def register():
         username = request.form.get("username")
         if not username:
             return apology("MUST PROVIDE USERNAME!")
-        elif db.execute("SELECT username FROM users WHERE username = :username", {"username": username}).fetchone():
+
+        if db.execute("""
+            SELECT username FROM users
+            WHERE username = :username """, {"username": username}).fetchone():
             return apology("USERNAME NOT AVAILABLE!")
+
         password = request.form.get("password")
         if not password:
             return apology("MUST PROVIDE PASSWORD!")
+
         confirmation = request.form.get("confirmation")
         if not confirmation:
             return apology("RE-ENTER PASSWORD TO CONFIRM!")
+
         if not confirmation == password:
             return apology("YOU ENTERED TWO DIFFERENT PASSWORDS!")
+
         if len(password) < 8:
             return apology("THE PASSWORD MUST CONTAIN ATLEAST 8 CHARACTERS!")
-        if not (re.search(r"[0-9]", password) and re.search(r"[a-z]", password) and re.search(r"[A-Z]", password) and re.search(r"\W", password)):
-            return apology("THE PASSWORD MUST CONTAIN ATLEAST ONE OUT OF 0-9, a-z, A-Z AND SPECIAL CHARACTERS!")
-        hash = generate_password_hash(password)
+
+        if not (re.search(r"[0-9]", password)
+                and re.search(r"[a-z]", password)
+                and re.search(r"[A-Z]", password)
+                and re.search(r"\W", password)):
+            return apology(""" THE PASSWORD MUST CONTAIN ATLEAST ONE OUT OF
+                            0-9, a-z, A-Z AND SPECIAL CHARACTERS! """)
 
         # Inserts user into database(name=users)
         db.execute("INSERT INTO users(username, hash) VALUES(:username, :hash)", {
             "username": username,
-            "hash": hash
+            "hash": generate_password_hash(password)
         })
         db.commit()
 
@@ -329,19 +338,20 @@ def sell():
 
         # Records in history table
         quote = lookup(symbol)
-        db.execute("INSERT INTO history (id, symbol, shares, price) VALUES (:id, :symbol, :shares, :price)", {
-            "id": session["user_id"],
-            "symbol": quote["symbol"],
-            "shares": -int(shares),
-            "price": quote["price"]
-        })
+        db.execute(""" INSERT INTO history (id, symbol, shares, price)
+                    VALUES (:id, :symbol, :shares, :price) """, {"id": session["user_id"],
+                                                                 "symbol": quote["symbol"],
+                                                                 "shares": -int(shares),
+                                                                 "price": quote["price"]
+                                                                 })
 
         # Updates cash in users table
         cash = db.execute(
             "SELECT cash FROM users WHERE id = :id", {"id": session["user_id"]}).fetchone()
-        updatedCash = cash["cash"] + quote["price"] * int(shares)
+
+        updated_cash = cash["cash"] + quote["price"] * int(shares)
         db.execute("UPDATE users SET cash = :cash WHERE id = :id", {
-            "cash": updatedCash, "id": session["user_id"]
+            "cash": updated_cash, "id": session["user_id"]
         })
 
         db.commit()
@@ -364,34 +374,36 @@ def sell():
 @app.route("/change", methods=["GET", "POST"])
 @login_required
 def change():
+    """ Changes user password """
+
     # When user submit the form
     if request.method == "POST":
 
         # Authentication of user
-        oldPassword = request.form.get("oldPassword")
-        if not oldPassword:
+        old_pswrd = request.form.get("old_pswrd")
+        if not old_pswrd:
             return apology("PROVIDE OLD PASSWORD TO CONTINUE!")
         row = db.execute(
             "SELECT hash FROM users WHERE id = :id", {"id": session["user_id"]}).fetchone()
-        if not check_password_hash(row["hash"], oldPassword):
+        if not check_password_hash(row["hash"], old_pswrd):
             return apology("INAVLID PASSWORD!")
 
         # New password validation
-        newPassword = request.form.get("newPassword")
-        if not newPassword:
+        new_pswrd = request.form.get("new_pswrd")
+        if not new_pswrd:
             return apology("PROVIDE NEW PASSWORD!")
-        if len(newPassword) < 8:
+        if len(new_pswrd) < 8:
             return apology("THE PASSWORD MUST CONTAIN ATLEAST 8 CHARACTERS!")
-        if not (re.search(r"[0-9]", newPassword)
-                and re.search(r"[a-z]", newPassword)
-                and re.search(r"[A-Z]", newPassword)
-                and re.search(r"\W", newPassword)):
-            return apology("THE PASSWORD MUST CONTAIN ATLEAST ONE OUT OF 0-9, a-z, A-Z AND SPECIAL CHARACTERS!")
+        if not (re.search(r"[0-9]", new_pswrd)
+                and re.search(r"[a-z]", new_pswrd)
+                and re.search(r"[A-Z]", new_pswrd)
+                and re.search(r"\W", new_pswrd)):
+            return apology("""THE PASSWORD MUST CONTAIN ATLEAST ONE OUT OF
+                            0-9, a-z, A-Z AND SPECIAL CHARACTERS!""")
 
         # Updating the database
-        hash = generate_password_hash(newPassword)
         db.execute("UPDATE users SET hash = :hash WHERE id = :id", {
-            "hash": hash,
+            "hash": generate_password_hash(new_pswrd),
             "id": session["user_id"]
         })
         db.commit()
@@ -407,6 +419,7 @@ def change():
 
 @app.route("/alert")
 def alert():
+    """ Sends alerts to user in json format """
 
     # Takes alert message
     message = request.args.get("message")
@@ -415,11 +428,11 @@ def alert():
     return jsonify(render_template("alert.html", message=message))
 
 
-def errorhandler(e):
+def errorhandler(error):
     """Handle error"""
-    if not isinstance(e, HTTPException):
-        e = InternalServerError()
-    return apology(e.name, e.code)
+    if not isinstance(error, HTTPException):
+        error = InternalServerError()
+    return apology(error.name, error.code)
 
 
 # Listen for errors
