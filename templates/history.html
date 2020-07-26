@@ -28,7 +28,11 @@ History
             <td>{{ row["shares"] }}</td>
             <td>{{ row["price"] | usd }}</td>
             <td>{{ row["total"] | usd }}</td>
-            <td>{{ row["transacted"] }} UTC</td>
+            <td></td>
+            <script>
+                td_lst = document.querySelectorAll("td");
+                td_lst[td_lst.length - 1].innerHTML = moment("{{row['transacted']}}").format("lll")
+            </script>
         </tr>
         {% endfor %}
     </tbody>
