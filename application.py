@@ -73,15 +73,15 @@ def index():
         quote = lookup(row["symbol"])
 
         # Adds to table the various data collected
-        if row["SUM(shares)"]:
+        if row["sum"]:
             table.append({
                 "symbol": quote["symbol"],
                 "name": quote["name"],
-                "shares": row["SUM(shares)"],
+                "shares": row["sum"],
                 "price": quote["price"],
-                "total": row["SUM(shares)"] * quote["price"]
+                "total": row["sum"] * quote["price"]
             })
-            total_price += row["SUM(shares)"] * quote["price"]
+            total_price += row["sum"] * quote["price"]
 
     # For showing available cash
     cash = db.execute("SELECT cash FROM users WHERE id = :id", {
@@ -89,7 +89,7 @@ def index():
     }).fetchone()
 
     # For showing grand total
-    grand_total = total_price + cash["cash"]
+    grand_total = total_price + float(cash["cash"])
 
     return render_template("index.html", table=table, cash=cash["cash"], grand_total=grand_total)
 
@@ -129,7 +129,7 @@ def buy():
         # Records
         db.execute("""
         INSERT INTO history(id, symbol, shares, price)
-        VALUES(: id, : symbol, : shares, : price)""", {
+        VALUES(:id, :symbol, :shares, :price)""", {
             "id": session["user_id"],
             "symbol": quote["symbol"],
             "shares": int(shares),
@@ -137,7 +137,7 @@ def buy():
         })
 
         # Update
-        cash = cash["cash"] - price
+        cash = float(cash["cash"]) - price
         db.execute("UPDATE users SET cash = :cash WHERE id = :id", {
             "cash": cash, "id": session["user_id"]
         })
@@ -324,7 +324,7 @@ def sell():
         row = db.execute("SELECT SUM(shares) FROM history WHERE id = :id AND symbol = :symbol", {
             "id": session["user_id"], "symbol": symbol
         }).fetchone()
-        if row["SUM(shares)"] is None:
+        if row["sum"] is None:
             return apology("YOU DON'T HAVE SHARES OF THIS COMPANY!")
         shares = request.form.get("shares")
         if not shares:
@@ -333,8 +333,8 @@ def sell():
             return apology("INVALID SHARES PROVIDED!")
 
         # Checks affordability
-        if int(shares) > row["SUM(shares)"]:
-            return apology("YOU HAVE ONLY {} SHARES OF THIS COMPANY!".format(row["SUM(shares)"]))
+        if int(shares) > row["sum"]:
+            return apology("YOU HAVE ONLY {} SHARES OF THIS COMPANY!".format(row["sum"]))
 
         # Records in history table
         quote = lookup(symbol)
@@ -349,7 +349,7 @@ def sell():
         cash = db.execute(
             "SELECT cash FROM users WHERE id = :id", {"id": session["user_id"]}).fetchone()
 
-        updated_cash = cash["cash"] + quote["price"] * int(shares)
+        updated_cash = float(cash["cash"]) + quote["price"] * int(shares)
         db.execute("UPDATE users SET cash = :cash WHERE id = :id", {
             "cash": updated_cash, "id": session["user_id"]
         })
