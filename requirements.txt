@@ -1,3 +1,6 @@
 Flask
 Flask-Session
 requests
+sql
+psycopg2
+SQLAlchemy
