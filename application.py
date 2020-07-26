@@ -3,6 +3,7 @@ import os
 
 import re
 
+from datetime import datetime
 from tempfile import mkdtemp
 from flask import Flask, flash, jsonify, redirect, render_template, request, session
 from sqlalchemy import create_engine
@@ -120,24 +121,26 @@ def buy():
             return apology("INVALID SYMBOL!")
 
         # Checks for affordability
-        price = int(shares) * quote["price"]
+        total = int(shares) * quote["price"]
         cash = db.execute(
             "SELECT cash FROM users WHERE id = :id", {"id": session["user_id"]}).fetchone()
-        if cash["cash"] < price:
+        if cash["cash"] < total:
             return apology("CAN'T AFFORD!")
 
         # Records
         db.execute("""
-        INSERT INTO history(id, symbol, shares, price)
-        VALUES(:id, :symbol, :shares, :price)""", {
+        INSERT INTO history(id, symbol, shares, price, total, transacted)
+        VALUES(:id, :symbol, :shares, :price, :total, :transacted)""", {
             "id": session["user_id"],
             "symbol": quote["symbol"],
             "shares": int(shares),
-            "price": price
+            "price": quote["price"],
+            "total": total,
+            "transacted": datetime.utcnow()
         })
 
         # Update
-        cash = float(cash["cash"]) - price
+        cash = float(cash["cash"]) - total
         db.execute("UPDATE users SET cash = :cash WHERE id = :id", {
             "cash": cash, "id": session["user_id"]
         })
@@ -338,12 +341,14 @@ def sell():
 
         # Records in history table
         quote = lookup(symbol)
-        db.execute(""" INSERT INTO history (id, symbol, shares, price)
-                    VALUES (:id, :symbol, :shares, :price) """, {"id": session["user_id"],
-                                                                 "symbol": quote["symbol"],
-                                                                 "shares": -int(shares),
-                                                                 "price": quote["price"]
-                                                                 })
+        db.execute(""" INSERT INTO history (id, symbol, shares, price, total, transacted)
+                    VALUES (:id, :symbol, :shares, :price, :total, :transacted) """, {"id": session["user_id"],
+                                                                                      "symbol": quote["symbol"],
+                                                                                      "shares": -int(shares),
+                                                                                      "price": quote["price"],
+                                                                                      "total": int(shares) * quote["price"],
+                                                                                      "transacted": datetime.utcnow()
+                                                                                      })
 
         # Updates cash in users table
         cash = db.execute(
