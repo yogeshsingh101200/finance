@@ -1,43 +1,44 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Buy
+Buy
 {% endblock %}
 
 {% block main %}
-    <form action="/buy" method="post" class="needs-validation" novalidate>
-        <div class="form-group">
-            <input autofocus autocomplete="off" class="form-control" name="symbol" placeholder="Symbol" type="text"required>
-            <div class="invalid-feedback">
-                Please enter a valid symbol like MSFT for Microsft, Corp.
-            </div>
+<form action="/buy" method="post" class="needs-validation" novalidate>
+    <div class="form-group">
+        <input autofocus autocomplete="off" class="form-control" name="symbol" placeholder="Symbol" type="text"
+            required>
+        <div class="invalid-feedback">
+            Please enter a valid symbol like MSFT for Microsft, Corp.
         </div>
-        <div class="form-group">
-            <input class="form-control" name="shares" placeholder="Shares" type="number" min="1" required>
-            <div class="invalid-feedback">
-                Please enter shares in natural numbers.
-            </div>
+    </div>
+    <div class="form-group">
+        <input class="form-control" name="shares" placeholder="Shares" type="number" min="1" required>
+        <div class="invalid-feedback">
+            Please enter shares in natural numbers.
         </div>
-        <button class="btn btn-primary" type="submit">Buy</button>
-    </form>
-    <script>
-        // Example starter JavaScript for disabling form submissions if there are invalid fields
-        (function() {
-            'use strict';
-            window.addEventListener('load', function() {
-                // Fetch all the forms we want to apply custom Bootstrap validation styles to
-                var forms = document.getElementsByClassName('needs-validation');
-                // Loop over them and prevent submission
-                var validation = Array.prototype.filter.call(forms, function(form) {
-                    form.addEventListener('submit', function(event) {
-                        if (form.checkValidity() === false) {
-                            event.preventDefault();
-                            event.stopPropagation();
-                        }
-                        form.classList.add('was-validated');
-                    }, false);
-                });
-            }, false);
-        })();
-    </script>
+    </div>
+    <button class="btn btn-primary" type="submit">Buy</button>
+</form>
+<script>
+    // JavaScript for disabling form submissions if there are invalid fields
+    (function () {
+        'use strict';
+        window.addEventListener('load', function () {
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            var forms = document.querySelectorAll(".needs-validation")
+            // Loop over them and prevent submission
+            var validation = forms.forEach(form => {
+                form.onsubmit = event => {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }
+            });
+        }, false);
+    })();
+</script>
 {% endblock %}
