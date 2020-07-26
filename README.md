@@ -2,6 +2,8 @@
 
 Finance, a web app via which you can manage portfolios of stocks. Its shows real time stock prices of company and lets you "sell" and "buy" stocks.
 
+[Visit here](https://finance-quote-buy-sell-shares.herokuapp.com/login)
+
 ## To run app locally
 first
 ```
